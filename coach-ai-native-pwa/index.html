@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Coach AI">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EBEFEC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1618" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Coach AI-Native</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+button,a,label{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+img{max-width:100%}
+/* Concept : des strates. Un socle Agile plein, des couches IA qui se remplissent au fil des 18 mois.
+   Le tableau mesure l'écart à combler, pas une progression de 0 à 100 %. */
+:root{
+  --bg:#EBEFEC; --surface:#F7F9F7; --ink:#10242B; --muted:#55696F; --line:#C9D4D0; --track:#DCE4E1;
+  --socle:#1D4E5A; --on-socle:#FFFFFF;
+  --amber:#D9822B; --on-amber:#1B1206; --amber-ink:#9A5510; --amber-soft:#F6E4CC;
+  --good:#2E7D5B; --good-soft:#D2EBDD;
+  --p1:#2F6F7D; --p2:#4F8A78; --p3:#7C9A5E; --p4:#B08A3A; --p5:#C8741A;
+  --f-display:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1618; --surface:#152024; --ink:#E4EDEB; --muted:#8DA3A8; --line:#263539; --track:#1F2E32;
+    --socle:#5FA7B5; --on-socle:#06151A;
+    --amber:#F0A04B; --on-amber:#1B1206; --amber-ink:#F0A04B; --amber-soft:#3A2A15;
+    --good:#5CC596; --good-soft:#17352A;
+    --p1:#6FB3C0; --p2:#82C3AB; --p3:#A9C27F; --p4:#D9B462; --p5:#EE9A45;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1618; --surface:#152024; --ink:#E4EDEB; --muted:#8DA3A8; --line:#263539; --track:#1F2E32;
+  --socle:#5FA7B5; --on-socle:#06151A;
+  --amber:#F0A04B; --on-amber:#1B1206; --amber-ink:#F0A04B; --amber-soft:#3A2A15;
+  --good:#5CC596; --good-soft:#17352A;
+  --p1:#6FB3C0; --p2:#82C3AB; --p3:#A9C27F; --p4:#D9B462; --p5:#EE9A45;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:0}
+.wrap{max-width:1080px;margin-inline:auto;padding-bottom:64px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(28px,5vw,46px);line-height:1.05;font-weight:800}
+h2{font-size:clamp(20px,3vw,26px);font-weight:700;line-height:1.15}
+h3{font-size:17px;font-weight:700;line-height:1.25}
+p{margin:0}
+a{color:var(--amber-ink)}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-top:12px}
+.top-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font:800 20px var(--f-display)}
+.glyph{display:grid;gap:2px;width:22px}
+.glyph i{display:block;height:5px;background:var(--amber)}
+.glyph i:nth-child(2){background:var(--p3)}
+.glyph i:nth-child(3){background:var(--socle)}
+#sync{font:400 12px var(--f-mono);color:var(--muted)}
+.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:8px;scrollbar-width:thin}
+.tabs button{flex:none;background:none;border:0;border-bottom:3px solid transparent;padding:9px 12px;font:500 14px var(--f-body);color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--amber)}
+.panel{padding-top:28px;display:flex;flex-direction:column;gap:36px}
+.sec-head{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:end}
+.lede{max-width:56ch;color:var(--muted);margin-top:14px}
+.figs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:0;border-top:2px solid var(--ink)}
+.figs div{padding:12px 12px 0 0}
+.figs dt{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.figs dd{margin:4px 0 0;font:800 30px/1.1 var(--f-display)}
+.figs dd small{display:block;font:400 12px var(--f-body);color:var(--muted);margin-top:4px}
+@media (max-width:760px){.hero{grid-template-columns:1fr}.figs dd{font-size:24px}}
+
+/* two-up */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px}
+.box{background:var(--surface);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.box.hl{border-color:var(--ink);border-width:2px}
+.btn{align-self:flex-start;background:var(--ink);color:var(--bg);border:0;padding:9px 14px;font:600 13px var(--f-body);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+.tasklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.tasklist label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.tasklist input{margin-top:4px;accent-color:var(--socle);width:16px;height:16px;flex:none}
+.tasklist .done span{color:var(--muted)}
+.split{display:flex;height:10px;gap:2px}
+.split i{display:block}
+.split i:nth-child(1){flex:2;background:var(--p1)}
+.split i:nth-child(2){flex:3;background:var(--p3)}
+.split i:nth-child(3){flex:1;background:var(--amber)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:400 12px var(--f-mono);color:var(--muted)}
+
+/* strata */
+.strata{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.layer{display:grid;grid-template-columns:minmax(150px,240px) 1fr 92px;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.layer .nm{font-weight:500}
+.bar{height:16px;background:var(--track);position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--amber)}
+.layer.socle .bar i{background:var(--socle)}
+.layer .val{font:500 12px var(--f-mono);text-align:right;color:var(--muted)}
+@media (max-width:560px){.layer{grid-template-columns:1fr auto}.layer .bar{grid-column:1/-1;order:3}}
+
+/* xp */
+.xpbar{height:12px;background:var(--track)}
+.xpbar i{display:block;height:100%;background:var(--socle)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:8px}
+.badge{border:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:2px;background:var(--surface)}
+.badge b{font:700 14px var(--f-display)}
+.badge span{font-size:12px;color:var(--muted)}
+.badge.off{opacity:.62;border-style:dashed}
+.badge.on{border-color:var(--good);background:var(--good-soft)}
+
+/* roadmap */
+.strip{display:grid;grid-template-columns:repeat(18,minmax(0,1fr));gap:4px}
+.mcell{position:relative;border:1px solid var(--line);background:var(--surface);padding:6px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;border-top:4px solid var(--pc)}
+.mcell b{font:600 12px var(--f-mono)}
+.mcell span{font:400 10px var(--f-mono);color:var(--muted)}
+.mcell i{position:absolute;left:0;bottom:0;height:4px;background:var(--good)}
+.mcell.now{outline:2px solid var(--ink);outline-offset:1px}
+@media (max-width:760px){.strip{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.phase{border:1px solid var(--line);background:var(--surface)}
+.phase>button{width:100%;display:flex;gap:14px;align-items:center;justify-content:space-between;background:none;border:0;padding:16px 18px;text-align:left;cursor:pointer;border-left:6px solid var(--pc)}
+.phase>button .t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.phase>button .r{font:500 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.phase-body{padding:4px 18px 18px;display:flex;flex-direction:column;gap:0}
+.phase-goal{padding:6px 0 14px;color:var(--muted);max-width:70ch}
+.mrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+.mrow .mh{display:flex;flex-direction:column;gap:2px}
+.mrow .mh b{font:600 13px var(--f-mono)}
+.pill{display:inline-block;font:500 11px var(--f-mono);padding:2px 7px;background:var(--ink);color:var(--bg);align-self:flex-start;margin-top:4px}
+@media (max-width:620px){.mrow{grid-template-columns:1fr;gap:8px}}
+
+/* skills */
+.scale{display:flex;gap:6px 16px;flex-wrap:wrap;font:400 12px var(--f-mono);color:var(--muted)}
+.dom{border-top:2px solid var(--ink);padding-top:10px;margin-top:6px}
+.dom-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.skill{display:grid;grid-template-columns:minmax(0,1fr) auto 70px;gap:14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.lvs{display:flex;gap:3px}
+.lvs button{width:30px;height:30px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:500 12px var(--f-mono);cursor:pointer;padding:0}
+.lvs button.fill{background:var(--amber);color:var(--on-amber);border-color:var(--amber)}
+.lvs.sc button.fill{background:var(--socle);color:var(--on-socle);border-color:var(--socle)}
+.lvs button.tgt{box-shadow:inset 0 -4px 0 var(--ink)}
+.gapv{font:500 12px var(--f-mono);text-align:right;color:var(--amber-ink)}
+.gapv.ok{color:var(--good)}
+@media (max-width:620px){.skill{grid-template-columns:1fr auto}.skill .lvs{grid-column:1/-1;order:3}}
+.link-btn{background:none;border:0;padding:0;color:var(--amber-ink);text-decoration:underline;cursor:pointer;font:500 13px var(--f-body)}
+
+/* projects, learn */
+.seg{display:inline-flex;border:1px solid var(--line);flex-wrap:wrap}
+.seg button{padding:7px 11px;border:0;background:transparent;color:var(--muted);font:500 12px var(--f-body);cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.proj{display:flex;flex-direction:column;gap:12px}
+.proj .no{font:800 44px/1 var(--f-display);color:var(--amber)}
+.proj ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.kv{display:grid;grid-template-columns:90px minmax(0,1fr);gap:4px 12px;font-size:14px}
+.kv dt{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding-top:3px}
+.kv dd{margin:0}
+.chip{display:inline-block;font:500 11px var(--f-mono);padding:2px 7px;border:1px solid var(--line);color:var(--muted);margin:0 4px 4px 0}
+.list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;padding:12px 0;border-bottom:1px solid var(--line);align-items:start}
+.item .why{grid-column:1;color:var(--muted);font-size:14px}
+.item .ctl{grid-row:1/3;grid-column:2}
+.item label{display:flex;gap:8px;align-items:center;font:500 13px var(--f-body);cursor:pointer}
+.item input{accent-color:var(--socle);width:16px;height:16px}
+@media (max-width:560px){.item{grid-template-columns:1fr}.item .ctl{grid-row:auto;grid-column:1}}
+.note{border-left:4px solid var(--amber);padding:6px 0 6px 14px;color:var(--muted);font-size:14px;max-width:72ch}
+.subnav{display:flex;gap:16px;flex-wrap:wrap}
+
+/* journal */
+form.jf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+form.jf .full{grid-column:1/-1}
+form.jf label{display:flex;flex-direction:column;gap:5px;font:500 12px var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+form.jf input,form.jf select,form.jf textarea{font:400 15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:9px 10px;width:100%;text-transform:none;letter-spacing:0}
+form.jf textarea{min-height:84px;resize:vertical}
+@media (max-width:620px){form.jf{grid-template-columns:1fr}}
+.entry{padding:16px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.entry .meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font:400 12px var(--f-mono);color:var(--muted)}
+.err{color:#B3261E;font-size:13px;min-height:18px}
+:root[data-theme="dark"] .err{color:#FF8A80}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .err{color:#FF8A80}}
+
+/* career */
+.ladder{display:flex;flex-direction:column;gap:0}
+.stage{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px}
+.stage .rail{display:flex;flex-direction:column;align-items:center}
+.stage .dot{width:28px;height:28px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;font:600 12px var(--f-mono);flex:none}
+.stage .rail s{display:block;flex:1;width:2px;background:var(--line);margin-top:2px}
+.stage:last-child .rail s{display:none}
+.stage.acq .dot{background:var(--socle);border-color:var(--socle);color:var(--on-socle)}
+.stage.reached .dot{background:var(--good);border-color:var(--good);color:#fff}
+.stage.cur .dot{border-color:var(--amber);background:var(--amber);color:var(--on-amber)}
+.stage .body{padding-bottom:26px;display:flex;flex-direction:column;gap:6px}
+.stage .sig{max-width:62ch}
+.principle{font:700 clamp(20px,3vw,28px)/1.2 var(--f-display);max-width:30ch}
+.empty{color:var(--muted);padding:18px 0;max-width:62ch}
+@media (prefers-reduced-motion: no-preference){.bar i,.xpbar i{transition:width .4s ease}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="top-row">
+      <div class="brand"><span class="glyph" aria-hidden="true"><i></i><i></i><i></i></span>Coach AI-Native</div>
+      <div id="sync" role="status">Chargement…</div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+  </header>
+
+  <main>
+    <section id="p-cap" class="panel" role="tabpanel"></section>
+    <section id="p-roadmap" class="panel" role="tabpanel" hidden></section>
+    <section id="p-skills" class="panel" role="tabpanel" hidden></section>
+    <section id="p-projects" class="panel" role="tabpanel" hidden></section>
+    <section id="p-learn" class="panel" role="tabpanel" hidden></section>
+    <section id="p-journal" class="panel" role="tabpanel" hidden>
+      <div class="sec-head">
+        <p class="eyebrow">Learning Journal</p>
+        <h2>Ce que j'apprends, ce que j'applique</h2>
+        <p class="muted" style="max-width:62ch">Une entrée par apprentissage utile. La colonne « Application en mission » compte autant que la leçon : c'est elle qui transforme une lecture en compétence.</p>
+      </div>
+      <form class="jf" id="jform" novalidate>
+        <label class="full">Titre<input id="j-title" type="text" maxlength="120" placeholder="Ex. Pourquoi un prompt sans exemple dérive sur les user stories"></label>
+        <label>Domaine<select id="j-dom"></select></label>
+        <label>Confiance après cet apprentissage<select id="j-conf"><option value="1">1 · notion</option><option value="2">2 · à revoir</option><option value="3" selected>3 · je peux l'utiliser</option><option value="4">4 · je peux l'enseigner</option></select></label>
+        <label class="full">Ce que j'ai appris<textarea id="j-learned" maxlength="1500"></textarea></label>
+        <label class="full">Application en mission<textarea id="j-applied" maxlength="1500" placeholder="Où, avec qui, et quel résultat attendre ?"></textarea></label>
+        <div class="full row-btns" style="align-items:center"><button class="btn" type="submit">Ajouter l'entrée</button><span class="err" id="j-err" role="alert"></span></div>
+      </form>
+      <div><h3 id="j-count" style="margin-bottom:6px"></h3><div id="jlist"></div></div>
+    </section>
+    <section id="p-career" class="panel" role="tabpanel" hidden></section>
+  </main>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- données ---------- */
+const DOMS=[
+ {id:"socle",n:"Socle Agile et RTE"},
+ {id:"gen",n:"IA générative"},
+ {id:"agent",n:"IA agentique et agents"},
+ {id:"auto",n:"Automatisation et API"},
+ {id:"data",n:"Data et Delivery Intelligence"},
+ {id:"prod",n:"Product et Outcome Thinking"},
+ {id:"gov",n:"Gouvernance de l'IA"},
+ {id:"chg",n:"Conduite du changement IA"},
+ {id:"nat",n:"Organisation AI-native"}
+];
+const STRATA_ORDER=["nat","chg","gov","prod","data","auto","agent","gen","socle"];
+const SK=[
+ ["s1","socle","Scrum et agilité",5,5],
+ ["s2","socle","Facilitation et coaching d'équipe",5,5],
+ ["s3","socle","Accompagnement des PO et Tech Leads",5,5],
+ ["s4","socle","SAFe et rôle de RTE (PI Planning, Inspect & Adapt)",5,5],
+ ["s5","socle","Rituels, DoR / DoD, découpage de User Stories",5,5],
+ ["s6","socle","Métriques Agile et delivery, Jira Cloud",4,4],
+ ["s7","socle","Excel, Power Query, Miro",4,4],
+ ["s8","socle","Accompagnement du changement",4,4],
+ ["g1","gen","Prompting avancé et context engineering",2,4],
+ ["g2","gen","Fonctionnement des LLM : limites, coûts, évaluation",1,3],
+ ["g3","gen","RAG et bases de connaissances",0,3],
+ ["a1","agent","Conception d'agents et de workflows agentiques",0,4],
+ ["a2","agent","Appel d'outils et MCP",0,3],
+ ["a3","agent","Orchestration multi-agents et évaluation",0,3],
+ ["u1","auto","APIs REST et JSON",1,3],
+ ["u2","auto","Automatisation no-code (n8n, Make, Power Automate)",1,4],
+ ["u3","auto","Python léger pour prototyper",1,3],
+ ["d1","data","Delivery analytics augmentés par l'IA",2,4],
+ ["d2","data","Data literacy et tableaux de bord",3,4],
+ ["p1","prod","OKR et cartographie des résultats",2,4],
+ ["p2","prod","Discovery, hypothèses et mesure de valeur",2,4],
+ ["r1","gov","Cadre réglementaire (AI Act)",0,3],
+ ["r2","gov","Risques, éthique et évaluation des systèmes",0,3],
+ ["r3","gov","Politiques d'usage et gouvernance en entreprise",0,4],
+ ["c1","chg","Adoption de l'IA par les équipes",1,4],
+ ["c2","chg","Redesign des modes de fonctionnement",1,4],
+ ["c3","chg","Maturité IA et coaching de dirigeants",1,4],
+ ["n1","nat","Modèle opérationnel AI-native",0,4],
+ ["n2","nat","Mesure d'impact de l'IA (productivité, qualité, valeur)",0,4]
+].map(([id,d,n,c,t])=>({id,d,n,c,t}));
+const LEVELS=["Inconnu","Notions","Pratique guidée","Autonome","Avancé","Référent"];
+
+const PHASES=[
+ {id:1,n:"Fondations IA",a:1,b:3,proj:1,goal:"Intégrer l'IA générative à ma pratique de coaching et en comprendre les limites.",ch:"Rejouez une rétrospective récente avec un assistant IA et comparez sa synthèse à la vôtre."},
+ {id:2,n:"Automatisation et données",a:4,b:6,proj:2,goal:"Relier des outils par API et automatiser la collecte des données de delivery.",ch:"Automatisez un export Jira hebdomadaire, même incomplet, et regardez ce qu'il révèle."},
+ {id:3,n:"Agents",a:7,b:10,proj:3,goal:"Concevoir, connecter et évaluer des agents sur des tâches de delivery réelles.",ch:"Faites exécuter une tâche de refinement par un agent et notez chacune de ses erreurs."},
+ {id:4,n:"Gouvernance et résultats",a:11,b:14,proj:4,goal:"Cadrer l'usage de l'IA, mesurer la valeur et conduire l'adoption.",ch:"Rédigez en une page les règles d'usage de l'IA d'une équipe que vous connaissez."},
+ {id:5,n:"Transformation et positionnement",a:15,b:18,proj:5,goal:"Passer de l'équipe à l'organisation et packager une offre.",ch:"Dessinez sur une page le flux de valeur d'une équipe composée d'humains et d'agents."}
+];
+const MONTHS=[
+ ["Cartographier ma base",["Auto-évaluer la Skills Matrix et ajuster les cibles à 18 mois","Choisir 3 tâches de coaching récurrentes à confier à un assistant IA (préparation d'atelier, synthèse de rétro, découpage de stories)","Ouvrir le Learning Journal et y consigner la première semaine"]],
+ ["Prompting et contexte",["Construire une bibliothèque de 15 prompts de coaching avec rôle, contexte, exemples et format de sortie","Pratiquer le context engineering : instructions persistantes, fichiers de référence, projets","Suivre un cours de fondamentaux de l'IA générative (voir Learning Center)"]],
+ ["Comprendre les modèles, livrer le Projet 1",["Maîtriser tokens, fenêtre de contexte, hallucinations, coûts et méthodes d'évaluation","Livrer le Projet 1 en version 1","Publier un premier retour d'expérience (note ou article court)"]],
+ ["APIs et automatisation",["Appeler une API REST avec Postman, puis l'API d'un modèle de langage","Construire un premier workflow no-code (déclencheur, modèle, Jira ou Teams)","Écrire un notebook Python léger : requêtes, JSON, pandas"]],
+ ["Delivery intelligence",["Extraire des données Jira par API et calculer cycle time, throughput et âge du WIP","Ajouter une synthèse en langage naturel des anomalies de flux","Cadrer le Projet 2 avec une équipe volontaire"]],
+ ["Projet 2 et premier jalon",["Livrer le Projet 2 en version 1","Mettre à jour la Skills Matrix et faire la rétrospective des phases 1 et 2","Passer une certification de fondamentaux IA (voir Apprendre)"]],
+ ["Fondations agentiques",["Décrire la boucle d'un agent : objectif, outils, mémoire, planification, garde-fous","Construire un agent à tâche unique avec appel d'outils","Étudier les guides de conception d'agents publiés par les éditeurs"]],
+ ["MCP et bases de connaissances",["Connecter un agent à des outils via MCP (fichiers, calendrier, Jira)","Bâtir un RAG sur une base documentaire non confidentielle"]],
+ ["Multi-agents et évaluation",["Orchestrer plusieurs agents aux rôles distincts (rédacteur, relecteur, contrôleur)","Constituer un jeu de tests et mesurer erreurs, coût et temps gagné"]],
+ ["Projet 3 et deuxième jalon",["Livrer le Projet 3 en version 1","Démontrer le résultat à deux pairs et recueillir leurs critiques","Mettre à jour la Skills Matrix"]],
+ ["Cadre réglementaire",["Cartographier l'AI Act : catégories de risque, obligations, calendrier","Rédiger un modèle de politique d'usage de l'IA pour une équipe"]],
+ ["Risques et éthique",["Construire un registre de risques : confidentialité, biais, propriété intellectuelle, dépendance","Comparer les cadres NIST AI RMF et ISO/IEC 42001","Passer la certification de gouvernance (voir Apprendre)"]],
+ ["Résultats et valeur",["Relier les initiatives IA à des OKR et à une carte des résultats attendus","Définir baselines, indicateurs d'adoption et d'impact avant tout déploiement"]],
+ ["Adoption et Projet 4",["Adapter un modèle de conduite du changement (ADKAR, Prosci) aux résistances propres à l'IA","Livrer le Projet 4 en version 1","Mettre à jour la Skills Matrix"]],
+ ["Maturité IA",["Concevoir un modèle de maturité IA pour organisations agiles : niveaux et indicateurs","Réaliser un diagnostic pilote avec une équipe ou une organisation volontaire"]],
+ ["Modèle opérationnel AI-native",["Étudier des organisations AI-native : rôles, flux, boucles de décision, collaboration humains et agents","Redessiner un flux de delivery SAFe ou Scrum avec des agents"]],
+ ["Projet 5",["Livrer le Projet 5 en version 1","Mesurer l'impact du pilote et documenter les enseignements"]],
+ ["Positionnement et bilan",["Packager l'offre Agile & AI Transformation : diagnostic, accompagnement, formation","Publier deux interventions : articles ou talks","Mettre à jour CV et profil, puis écrire la roadmap suivante"]]
+].map(([title,tasks],i)=>({n:i+1,title,tasks}));
+
+const PROJ=[
+ {id:1,n:"Copilote de coaching agile",m:"Mois 1 à 3",goal:"Un assistant configuré qui prépare vos ateliers, synthétise vos rétrospectives et propose un découpage de user stories.",deliv:["Bibliothèque de 15 prompts documentés","Assistant avec instructions et fichiers de référence","Guide d'usage de 2 pages pour une équipe"],stack:"Assistant IA, Miro, Jira Cloud",sk:["gen"],dod:"Utilisé sur au moins 3 événements réels, avec temps gagné et qualité notés dans le journal."},
+ {id:2,n:"Delivery Intelligence Assistant",m:"Mois 4 à 6",goal:"Un pipeline qui lit Jira, calcule les métriques de flux et rédige chaque semaine une synthèse des anomalies.",deliv:["Extraction Jira par script ou workflow","Tableau de bord cycle time, throughput, âge du WIP","Synthèse hebdomadaire générée puis relue"],stack:"API Jira, n8n ou Make, Python léger, Power Query, Power BI",sk:["auto","data","gen"],dod:"Tourne chaque semaine pour une équipe volontaire pendant 4 semaines, sans manipulation manuelle des données."},
+ {id:3,n:"Workflow agile agentique",m:"Mois 7 à 10",goal:"Des agents qui préparent le refinement : détection des stories trop grosses, contrôle de la DoR, repérage des dépendances.",deliv:["Agent de contrôle de la DoR","Agent de découpage de stories avec relecture humaine","Jeu de tests et rapport d'évaluation"],stack:"API d'un modèle, MCP, Jira, base documentaire",sk:["agent","gen","auto"],dod:"Taux d'erreur mesuré sur un jeu de tests, garde-fous documentés, démonstration à deux pairs."},
+ {id:4,n:"Playbook d'adoption et de gouvernance de l'IA",m:"Mois 11 à 14",goal:"Un kit réutilisable pour cadrer l'usage de l'IA dans une organisation : règles, risques, indicateurs et plan d'adoption.",deliv:["Politique d'usage et registre de risques","Cartographie simplifiée de l'AI Act","Plan d'adoption avec indicateurs de résultats"],stack:"Documents, OKR, modèle de conduite du changement",sk:["gov","chg","prod"],dod:"Relu par un juriste ou un responsable conformité, puis testé auprès d'une équipe."},
+ {id:5,n:"Blueprint du modèle opérationnel AI-native",m:"Mois 15 à 17",goal:"Un diagnostic de maturité et un redesign de flux de delivery avec agents, éprouvé en pilote.",deliv:["Modèle de maturité IA et grille de diagnostic","Flux de valeur redessiné, humains et agents","Rapport de pilote avec mesures d'impact"],stack:"Miro, métriques de flux, agents du Projet 3",sk:["nat","chg","data"],dod:"Un pilote mené jusqu'au bout, avec résultats mesurés avant et après."}
+];
+const PSTAT=[["todo","À faire"],["wip","En cours"],["done","Livré"]];
+
+const RES=[
+ {id:"r1",ph:1,t:"Cours",n:"Generative AI for Everyone (DeepLearning.AI)",u:"https://www.deeplearning.ai",w:"Vue d'ensemble non technique, utile pour cadrer les échanges avec des dirigeants."},
+ {id:"r2",ph:1,t:"Documentation",n:"Prompt engineering (Anthropic)",u:"https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview",w:"Techniques de prompt structurées, avec exemples à reprendre dans la bibliothèque du Projet 1."},
+ {id:"r3",ph:1,t:"Pratique",n:"Instructions persistantes et projets dans votre assistant",u:"",w:"Le context engineering s'apprend en configurant un vrai espace de travail, pas en lisant."},
+ {id:"r4",ph:2,t:"Formation",n:"n8n Academy (n8n)",u:"https://n8n.io",w:"Workflows no-code avec déclencheurs, webhooks et nœuds de modèles de langage."},
+ {id:"r5",ph:2,t:"Outil",n:"Postman Learning Center",u:"https://learning.postman.com",w:"Comprendre requêtes, authentification et JSON avant d'écrire du code."},
+ {id:"r6",ph:2,t:"Documentation",n:"Jira Cloud REST API (Atlassian)",u:"https://developer.atlassian.com/cloud/jira/platform/rest/v3/",w:"Source de données du Projet 2 : tickets, changelogs, transitions."},
+ {id:"r7",ph:3,t:"Article",n:"Building effective agents (Anthropic)",u:"https://www.anthropic.com/research/building-effective-agents",w:"Patterns de conception d'agents et critères pour choisir un workflow plutôt qu'un agent."},
+ {id:"r8",ph:3,t:"Documentation",n:"Model Context Protocol",u:"https://modelcontextprotocol.io",w:"Standard de connexion entre agents et outils, central dans le Projet 3."},
+ {id:"r9",ph:3,t:"Formation",n:"Parcours agents et API (Anthropic Academy, DeepLearning.AI)",u:"",w:"Choisissez un parcours court avec exercices. Vérifiez le catalogue du moment."},
+ {id:"r10",ph:4,t:"Texte",n:"Règlement européen sur l'IA (AI Act)",u:"https://artificialintelligenceact.eu",w:"Lire les catégories de risque et le calendrier d'application avant de conseiller une organisation."},
+ {id:"r11",ph:4,t:"Référentiel",n:"NIST AI Risk Management Framework",u:"https://www.nist.gov/itl/ai-risk-management-framework",w:"Structure de gestion des risques réutilisable dans le registre du Projet 4."},
+ {id:"r12",ph:4,t:"Norme",n:"ISO/IEC 42001, système de management de l'IA",u:"https://www.iso.org/standard/81230.html",w:"Référence que les grandes organisations commencent à demander."},
+ {id:"r13",ph:5,t:"Communauté",n:"Meetups et communautés agiles et IA",u:"",w:"Tester vos idées de modèle opérationnel auprès de praticiens avant de les packager."}
+];
+const BOOKS=[
+ {id:"b1",ph:1,pr:"Essentiel",n:"Co-Intelligence",a:"Ethan Mollick",w:"Principes pratiques pour travailler avec l'IA au quotidien, réutilisables en atelier."},
+ {id:"b3",ph:2,pr:"Utile",n:"Prediction Machines",a:"Agrawal, Gans, Goldfarb",w:"L'économie de la prédiction : où l'IA crée de la valeur et où elle déplace les coûts."},
+ {id:"b2",ph:3,pr:"Utile",n:"AI Engineering",a:"Chip Huyen",w:"Comprendre un système IA en production sans devenir ingénieur ML. Lecture sélective."},
+ {id:"b11",ph:3,pr:"Optionnel",n:"The Alignment Problem",a:"Brian Christian",w:"Les enjeux de fiabilité et de valeurs, avec des cas concrets."},
+ {id:"b7",ph:4,pr:"Essentiel",n:"Outcomes Over Output",a:"Josh Seiden",w:"Formuler les résultats attendus avant les solutions, indispensable pour mesurer l'IA."},
+ {id:"b4",ph:4,pr:"Utile",n:"Power and Prediction",a:"Agrawal, Gans, Goldfarb",w:"Pourquoi l'IA transforme d'abord les systèmes de travail, puis les tâches."},
+ {id:"b6",ph:4,pr:"Utile",n:"Human + Machine",a:"Daugherty, Wilson",w:"Redessiner les processus pour la collaboration entre humains et machines."},
+ {id:"b8",ph:4,pr:"Utile",n:"Escaping the Build Trap",a:"Melissa Perri",w:"Piloter par les résultats plutôt que par les livrables."},
+ {id:"b10",ph:4,pr:"Optionnel",n:"Atlas of AI",a:"Kate Crawford",w:"Regard critique sur les coûts matériels, sociaux et politiques de l'IA."},
+ {id:"b5",ph:5,pr:"Essentiel",n:"Competing in the Age of AI",a:"Iansiti, Lakhani",w:"Le modèle d'organisation bâtie autour des données et des algorithmes."},
+ {id:"b9",ph:5,pr:"Utile",n:"Team Topologies",a:"Skelton, Pais",w:"Structurer équipes et interactions, base pour penser des équipes avec agents."},
+ {id:"b12",ph:5,pr:"Optionnel",n:"Thinking in Systems",a:"Donella Meadows",w:"Outils de pensée systémique pour le diagnostic d'organisation."}
+];
+const BSTAT=[["todo","À lire"],["wip","En cours"],["done","Lu"]];
+const CERTS=[
+ {id:"c1",m:"Mois 6",pr:"Priorité haute",n:"Google Cloud Generative AI Leader",is:"Google Cloud",w:"Fondamentaux de l'IA générative orientés décision. Au choix avec l'option Microsoft."},
+ {id:"c2",m:"Mois 6",pr:"Priorité haute",n:"Microsoft Azure AI Fundamentals (AI-900)",is:"Microsoft",w:"Alternative proche de votre environnement Microsoft 365 et Azure DevOps."},
+ {id:"c3",m:"Mois 12",pr:"Priorité haute",n:"AIGP, Artificial Intelligence Governance Professional",is:"IAPP",w:"Reconnaissance en gouvernance de l'IA, alignée sur le Projet 4."},
+ {id:"c4",m:"Mois 16 à 18",pr:"Optionnelle",n:"ISO/IEC 42001 Lead Implementer",is:"PECB ou organisme équivalent",w:"Utile si vos missions touchent des organisations réglementées."},
+ {id:"c5",m:"Mois 1 et 10",pr:"Veille",n:"Cursus IA des éditeurs agiles",is:"Scrum.org, Scaled Agile",w:"Ces éditeurs développent des offres IA. Vérifiez leur catalogue deux fois pendant la roadmap.",nox:true}
+];
+const CSTAT=[["todo","Envisagée"],["wip","En préparation"],["done","Obtenue"]];
+
+const STAGES=[
+ {n:1,name:"Expérience IT et Agile",hz:"Acquis",thr:0,sig:"Plus de 10 ans en IT, Scrum, SAFe et transformation.",proof:"Parcours existant"},
+ {n:2,name:"Senior Agile Coach / RTE",hz:"Acquis",thr:0,sig:"Coaching d'équipes, PI Planning, Inspect & Adapt, métriques de delivery.",proof:"Parcours existant"},
+ {n:3,name:"AI-Augmented Agile Coach",hz:"Mois 1 à 6",thr:.35,sig:"Je décuple ma pratique avec l'IA générative, l'automatisation et la donnée de delivery.",proof:"Projets 1 et 2"},
+ {n:4,name:"Agile & AI Transformation Coach",hz:"Mois 7 à 14",thr:.70,sig:"J'accompagne équipes et programmes dans la conception d'agents, la gouvernance et l'adoption de l'IA.",proof:"Projets 3 et 4"},
+ {n:5,name:"AI-Native Organization Coach",hz:"Mois 15 à 18, puis long terme",thr:.95,sig:"Je redessine le modèle opérationnel d'une organisation autour de la collaboration entre humains et agents.",proof:"Projet 5 et offre packagée"}
+];
+const XPLV=[[0,"Explorateur"],[200,"Praticien augmenté"],[500,"AI-Augmented Agile Coach"],[900,"Agile & AI Transformation Coach"],[1300,"AI-Native Organization Coach"]];
+
+/* ---------- état et persistance ---------- */
+const LS="coach-ai-native-v1";
+const dflt=()=>({v:1,done:{},lv:{},touched:false,proj:{},books:{},certs:{},res:{},journal:[],updated:0,backupAt:0});
+let S=dflt(),ref=null,inflight=false,pending=false,tm=null,mode="local",ready=false;
+let tab="cap",openPh=new Set(),openSocle=false,confirmDel=null;
+function lsRead(){try{const r=localStorage.getItem(LS);return r?JSON.parse(r):null}catch(e){return null}}
+function lsWrite(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function adopt(o){if(o&&typeof o==="object")S=Object.assign(dflt(),JSON.parse(JSON.stringify(o)))}
+function setSync(){const el=document.getElementById("sync");el.textContent=!ready?"Chargement…":(mode==="db"?"Enregistré dans votre espace":"Enregistré sur cet appareil")}
+function touch(){S.updated=Date.now();lsWrite();clearTimeout(tm);tm=setTimeout(flush,600);render()}
+async function flush(){
+  if(!ref){setSync();return}
+  if(inflight){pending=true;return}
+  inflight=true;
+  try{await ref.set(JSON.parse(JSON.stringify(S)));mode="db"}catch(e){mode="local"}
+  inflight=false;setSync();
+  if(pending){pending=false;flush()}
+}
+
+/* ---------- calculs ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dn=id=>DOMS.find(d=>d.id===id).n;
+const lvOf=s=>(S.lv[s.id]!==undefined?S.lv[s.id]:s.c);
+const phaseOf=n=>PHASES.find(p=>n>=p.a&&n<=p.b);
+const tid=(m,i)=>"m"+m+"t"+(i+1);
+const mDone=m=>m.tasks.filter((_,i)=>S.done[tid(m.n,i)]).length;
+const mFull=n=>MONTHS[n-1].tasks.every((_,i)=>S.done[tid(n,i)]);
+const doneCount=()=>Object.keys(S.done).length;
+const nProj=()=>Object.values(S.proj).filter(v=>v==="done").length;
+const nBooks=()=>Object.values(S.books).filter(v=>v==="done").length;
+const mLabel=(n,full)=>new Date(2026,9+n-1,1).toLocaleDateString("fr-FR",full?{month:"long",year:"numeric"}:{month:"short"});
+function curMonth(){const d=new Date();const n=(d.getFullYear()-2026)*12+(d.getMonth()-9)+1;return Math.max(1,Math.min(18,n))}
+function domStats(){const o={};DOMS.forEach(d=>o[d.id]={cur:0,tgt:0});SK.forEach(s=>{o[s.d].cur+=Math.min(lvOf(s),s.t);o[s.d].tgt+=s.t});return o}
+function gapAll(){const o=domStats();let cur=0,tgt=0,top=null;DOMS.forEach(d=>{if(d.id==="socle")return;cur+=o[d.id].cur;tgt+=o[d.id].tgt;const g=o[d.id].tgt-o[d.id].cur;if(!top||g>top.g)top={id:d.id,g}});return{o,cur,tgt,gap:tgt-cur,pct:Math.round(cur/tgt*100),top}}
+const INIT_GAP=SK.filter(s=>s.d!=="socle").reduce((a,s)=>a+(s.t-s.c),0);
+function mon(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+const wk=d=>{const m=mon(d);return m.getFullYear()+"-"+(m.getMonth()+1)+"-"+m.getDate()};
+function streak(){const set=new Set();Object.values(S.done).forEach(v=>set.add(wk(v)));S.journal.forEach(j=>set.add(wk(j.date)));const d=mon(new Date());if(!set.has(wk(d)))d.setDate(d.getDate()-7);let n=0;while(set.has(wk(d))){n++;d.setDate(d.getDate()-7)}return n}
+function journalThisWeek(){const k=wk(new Date());return S.journal.filter(j=>wk(j.date)===k).length}
+function xpCalc(){
+  let x=doneCount()*10;
+  x+=nProj()*60+nBooks()*20;
+  CERTS.forEach(c=>{if(!c.nox&&S.certs[c.id]==="done")x+=100});
+  const per={};S.journal.forEach(j=>{const k=wk(j.date);per[k]=(per[k]||0)+1});
+  Object.values(per).forEach(v=>{x+=Math.min(3,v)*10});
+  return x;
+}
+function levelOf(x){let i=0;XPLV.forEach((l,k)=>{if(x>=l[0])i=k});const nxt=XPLV[i+1];return{i,name:XPLV[i][1],from:XPLV[i][0],to:nxt?nxt[0]:null}}
+function nextTasks(){const cm=curMonth(),out=[];MONTHS.forEach(m=>m.tasks.forEach((t,i)=>{if(!S.done[tid(m.n,i)])out.push({id:tid(m.n,i),t,m:m.n,late:m.n<cm})}));return out}
+function nba(){
+  const nt=nextTasks(),cm=curMonth();
+  if(!S.touched)return{k:"matrix",title:"Calibrer votre Skills Matrix",why:"Les niveaux de départ sont des estimations. Les corriger donne un écart réel à mesurer, et c'est la première tâche du mois 1.",btn:"Ouvrir la Skills Matrix"};
+  const late=nt.find(x=>x.late);
+  if(late)return{k:"task",task:late,title:late.t,why:"Cette tâche date du mois "+late.m+". La terminer évite de décaler les phases suivantes.",btn:"Marquer comme fait"};
+  if(journalThisWeek()===0)return{k:"journal",title:"Écrire une entrée de journal (10 minutes)",why:"Aucune entrée cette semaine. Une entrée par semaine suffit pour garder la série active et fixer ce que vous avez appris.",btn:"Ouvrir le journal"};
+  if(nt.length){const x=nt[0];return{k:"task",task:x,title:x.t,why:x.m>cm?"Le mois "+cm+" est terminé. Vous pouvez avancer sur le mois "+x.m+".":"C'est la première tâche ouverte du mois "+x.m+".",btn:"Marquer comme fait"}}
+  return{k:"career",title:"Faire le bilan et écrire la roadmap suivante",why:"Toutes les tâches sont terminées. Relisez la Skills Matrix et fixez les cibles de la prochaine période.",btn:"Voir l'évolution de carrière"};
+}
+const BADGES=[
+ {id:"a",n:"Premier pas",d:"Terminer une première tâche",t:()=>doneCount()>=1},
+ {id:"b",n:"Mois validé",d:"Terminer toutes les tâches d'un mois",t:()=>MONTHS.some(m=>mDone(m)===m.tasks.length)},
+ {id:"c",n:"Atelier de prompts",d:"Terminer le mois 2",t:()=>mFull(2)},
+ {id:"d",n:"Premier workflow",d:"Terminer la tâche workflow du mois 4",t:()=>!!S.done.m4t2},
+ {id:"e",n:"Premier agent",d:"Terminer la tâche agent du mois 7",t:()=>!!S.done.m7t2},
+ {id:"f",n:"Livraison",d:"Livrer un premier projet",t:()=>nProj()>=1},
+ {id:"g",n:"Portfolio complet",d:"Livrer les 5 projets",t:()=>nProj()>=5},
+ {id:"h",n:"Lecteur",d:"Lire 3 ouvrages",t:()=>nBooks()>=3},
+ {id:"i",n:"Journal tenu",d:"10 entrées au journal",t:()=>S.journal.length>=10},
+ {id:"j",n:"Régularité",d:"4 semaines actives d'affilée",t:()=>streak()>=4},
+ {id:"k",n:"Gouvernance",d:"Terminer le mois 11",t:()=>mFull(11)},
+ {id:"l",n:"Écart divisé par deux",d:"Réduire l'écart initial de moitié",t:()=>gapAll().gap<=INIT_GAP/2}
+];
+
+/* ---------- vues ---------- */
+const seg=(act,id,opts,cur)=>'<div class="seg" role="group">'+opts.map(o=>'<button type="button" class="'+(cur===o[0]?"on":"")+'" aria-pressed="'+(cur===o[0])+'" data-act="'+act+'" data-id="'+id+'" data-val="'+o[0]+'" data-fk="'+act+id+o[0]+'">'+o[1]+'</button>').join("")+"</div>";
+const chk=(act,id,on,label)=>'<label><input type="checkbox" '+(on?"checked":"")+' data-act="'+act+'" data-id="'+id+'" data-fk="'+act+id+'"> '+label+"</label>";
+
+function rCap(){
+  const g=gapAll(),cm=curMonth(),b=nba(),x=xpCalc(),lv=levelOf(x),st=streak();
+  let stage=STAGES.find(s=>s.thr&&g.cur/g.tgt<s.thr)||STAGES[4];
+  const nt=nextTasks().slice(0,2);
+  const m0=mon(new Date()),m1=new Date(m0);m1.setDate(m1.getDate()+6);
+  const f=d=>d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+  const ph=phaseOf(cm);
+  const layers=STRATA_ORDER.map(id=>{const o=g.o[id],p=Math.round(o.cur/o.tgt*100);const soc=id==="socle";
+    return '<div class="layer '+(soc?"socle":"")+'"><span class="nm">'+esc(dn(id))+'</span><div class="bar" role="img" aria-label="'+p+' pour cent de la cible"><i style="width:'+p+'%"></i></div><span class="val">'+(soc?"acquis":(o.tgt-o.cur)+" pts à gagner")+"</span></div>"}).join("");
+  const pr=lv.to?Math.round((x-lv.from)/(lv.to-lv.from)*100):100;
+  const badges=BADGES.map(bd=>{const on=bd.t();return '<div class="badge '+(on?"on":"off")+'"><b>'+esc(bd.n)+"</b><span>"+esc(bd.d)+"</span></div>"}).join("");
+  let btn;
+  if(b.k==="task")btn='<button class="btn" data-act="nba-task" data-id="'+b.task.id+'" data-fk="nba">'+b.btn+"</button>";
+  else btn='<button class="btn" data-act="nba-go" data-id="'+b.k+'" data-fk="nba">'+b.btn+"</button>";
+  return '<div class="hero"><div><p class="eyebrow">Octobre 2026 à mars 2028</p><h1 style="margin-top:10px">Une couche IA sur dix ans d\'Agile</h1><p class="lede">Vous ne repartez pas de zéro. Ce tableau mesure l\'écart entre votre expertise actuelle et le profil d\'Agile &amp; AI Transformation Coach. Le socle Agile reste acquis, seules les couches IA restent à construire.</p></div>'
+   +'<dl class="figs"><div><dt>Écart restant</dt><dd>'+g.gap+' pts<small>sur '+INIT_GAP+' au départ</small></dd></div><div><dt>Couches IA</dt><dd>'+g.pct+' %<small>de la cible à 18 mois</small></dd></div><div><dt>Plan</dt><dd>M'+cm+'/18<small>'+esc(mLabel(cm,true))+"</small></dd></div></dl></div>"
+   +'<div class="cols"><div class="box hl"><p class="eyebrow">Prochaine meilleure action</p><h3>'+esc(b.title)+'</h3><p class="muted">'+esc(b.why)+"</p>"+btn+"</div>"
+   +'<div class="box"><p class="eyebrow">Focus de la semaine · '+f(m0)+" au "+f(m1)+'</p><h3>Mois '+cm+" · "+esc(MONTHS[cm-1].title)+"</h3>"
+   +(nt.length?'<ul class="tasklist">'+nt.map(t=>'<li>'+chk("task",t.id,false,esc(t.t)+(t.late?' <span class="chip">en retard</span>':""))+"</li>").join("")+"</ul>":'<p class="muted">Toutes les tâches sont terminées.</p>')
+   +'<div><div class="split" aria-hidden="true"><i></i><i></i><i></i></div><div class="legend" style="margin-top:6px"><span>2 h apprendre</span><span>3 h construire</span><span>1 h journal et partage</span></div></div>'
+   +'<p class="small"><b>Défi de la semaine.</b> '+esc(ph.ch)+"</p></div></div>"
+   +'<div><div class="sec-head"><p class="eyebrow">Écart par couche</p><h2>Le socle est plein, les couches IA se remplissent</h2><p class="muted small">Barre pleine : cible à 18 mois atteinte. Plus grand écart actuel : '+esc(dn(g.top.id))+" ("+g.top.g+' pts). Étape en cours : '+esc(stage.name)+'.</p></div><div class="strata">'+layers+"</div></div>"
+   +'<div><div class="sec-head"><p class="eyebrow">Progression</p><h2>Niveau : '+esc(lv.name)+'</h2></div><div class="box" style="margin-bottom:14px"><div class="xpbar" role="img" aria-label="Progression vers le niveau suivant"><i style="width:'+pr+'%"></i></div><div class="legend"><span>'+x+" XP</span><span>"+(lv.to?"prochain niveau à "+lv.to+" XP":"niveau maximal")+"</span><span>série : "+st+" semaine"+(st>1?"s":"")+"</span></div></div><div class=\"badges\">"+badges+"</div></div>"+backupBox();
+}
+
+function rRoadmap(){
+  const cm=curMonth();
+  const strip=MONTHS.map(m=>{const ph=phaseOf(m.n),d=mDone(m),t=m.tasks.length;return '<button class="mcell '+(m.n===cm?"now":"")+'" style="--pc:var(--p'+ph.id+')" data-act="goto" data-id="'+m.n+'" data-fk="goto'+m.n+'" aria-label="Mois '+m.n+", "+d+" tâches sur "+t+'"><b>M'+m.n+"</b><span>"+esc(mLabel(m.n))+'</span><i style="width:'+(d/t*100)+'%"></i></button>'}).join("");
+  const phases=PHASES.map(p=>{
+    const ms=MONTHS.filter(m=>m.n>=p.a&&m.n<=p.b);
+    const tot=ms.reduce((a,m)=>a+m.tasks.length,0),dn_=ms.reduce((a,m)=>a+mDone(m),0);
+    const open=openPh.has(p.id);
+    let body="";
+    if(open){
+      body='<div class="phase-body"><p class="phase-goal">'+esc(p.goal)+" Projet associé : "+esc(PROJ[p.proj-1].n)+".</p>"+ms.map(m=>'<div class="mrow" id="month-'+m.n+'"><div class="mh"><b>M'+m.n+" · "+esc(mLabel(m.n,true))+"</b><span class=\"small muted\">"+mDone(m)+"/"+m.tasks.length+" tâches</span>"+(m.n===cm?'<span class="pill">mois en cours</span>':"")+"</div><div><h3 style=\"margin-bottom:8px\">"+esc(m.title)+'</h3><ul class="tasklist">'+m.tasks.map((t,i)=>{const id=tid(m.n,i),on=!!S.done[id];return '<li class="'+(on?"done":"")+'">'+chk("task",id,on,"<span>"+esc(t)+"</span>")+"</li>"}).join("")+"</ul></div></div>").join("")+"</div>";
+    }
+    return '<div class="phase" style="--pc:var(--p'+p.id+')"><button data-act="ph" data-id="'+p.id+'" data-fk="ph'+p.id+'" aria-expanded="'+open+'"><span class="t"><span class="eyebrow">Phase '+p.id+" · mois "+p.a+" à "+p.b+"</span><h3>"+esc(p.n)+'</h3></span><span class="r">'+dn_+"/"+tot+" "+(open?"−":"+")+"</span></button>"+body+"</div>";
+  }).join("");
+  return '<div class="sec-head"><p class="eyebrow">Roadmap 18 mois</p><h2>Cinq phases, un projet livré par phase</h2><p class="muted" style="max-width:66ch">Rythme proposé : environ 6 heures par semaine. Chaque case cochée rapporte 10 XP. Les mois 6, 10 et 14 comprennent une mise à jour de la Skills Matrix.</p></div><div class="strip">'+strip+'</div><div style="display:flex;flex-direction:column;gap:12px">'+phases+"</div>";
+}
+
+function rSkills(){
+  const g=gapAll();
+  const group=id=>{
+    const items=SK.filter(s=>s.d===id),o=g.o[id],soc=id==="socle";
+    const rows=items.map(s=>{const c=lvOf(s);const gp=Math.max(0,s.t-c);
+      return '<div class="skill"><span>'+esc(s.n)+'</span><div class="lvs '+(soc?"sc":"")+'" role="group" aria-label="Niveau de '+esc(s.n)+'">'+[0,1,2,3,4,5].map(v=>'<button type="button" class="'+(v>0&&v<=c?"fill ":"")+(v===s.t?"tgt":"")+'" aria-pressed="'+(v===c)+'" title="'+esc(LEVELS[v])+(v===s.t?" · cible":"")+'" data-act="lv" data-id="'+s.id+'" data-val="'+v+'" data-fk="lv'+s.id+v+'">'+v+"</button>").join("")+'</div><span class="gapv '+(gp?"":"ok")+'">'+(gp?"écart "+gp:"atteint")+"</span></div>"}).join("");
+    return '<div class="dom"><div class="dom-h"><h3>'+esc(dn(id))+'</h3><span class="mono small muted">'+o.cur+"/"+o.tgt+" pts"+"</span></div>"+rows+"</div>";
+  };
+  const newG=DOMS.filter(d=>d.id!=="socle").map(d=>group(d.id)).join("");
+  return '<div class="sec-head"><p class="eyebrow">Skills Matrix</p><h2>Où vous en êtes, où vous allez</h2><p class="muted" style="max-width:66ch">Cliquez sur un niveau pour corriger votre auto-évaluation. Le trait sous un niveau marque la cible à 18 mois. Les niveaux de départ des couches IA sont des estimations à ajuster dès le mois 1.</p></div>'
+   +'<div class="scale">'+LEVELS.map((l,i)=>"<span>"+i+" "+esc(l)+"</span>").join("")+"</div>"
+   +'<div><button class="link-btn" data-act="socle" data-fk="socle" aria-expanded="'+openSocle+'">'+(openSocle?"Masquer":"Afficher")+" le socle acquis (8 compétences, niveau avancé à référent)</button>"+(openSocle?group("socle"):"")+"</div>"
+   +newG;
+}
+
+function rProjects(){
+  const cards=PROJ.map(p=>{const s=S.proj[p.id]||"todo";
+    return '<article class="box proj"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><span class="no">'+p.id+'</span>'+seg("proj",p.id,PSTAT,s)+"</div><div><p class=\"eyebrow\">"+esc(p.m)+"</p><h3>"+esc(p.n)+'</h3></div><p>'+esc(p.goal)+'</p><dl class="kv"><dt>Livrables</dt><dd><ul>'+p.deliv.map(d=>"<li>"+esc(d)+"</li>").join("")+"</ul></dd><dt>Outils</dt><dd>"+esc(p.stack)+"</dd><dt>Couches</dt><dd>"+p.sk.map(k=>'<span class="chip">'+esc(dn(k))+"</span>").join("")+"</dd><dt>Terminé quand</dt><dd>"+esc(p.dod)+"</dd></dl></article>"}).join("");
+  return '<div class="sec-head"><p class="eyebrow">Portfolio</p><h2>Cinq projets, du copilote à l\'organisation</h2><p class="muted" style="max-width:66ch">L\'ordre est une progression : chaque projet réutilise le précédent et passe d\'un outil personnel à un modèle d\'organisation. Un projet livré rapporte 60 XP.</p></div><div class="cols">'+cards+"</div>";
+}
+
+function rLearn(){
+  const res=PHASES.map(p=>{const items=RES.filter(r=>r.ph===p.id);
+    return '<div style="margin-bottom:18px"><p class="eyebrow" style="margin-bottom:6px">Phase '+p.id+" · "+esc(p.n)+'</p><div class="list">'+items.map(r=>'<div class="item"><div><span class="chip">'+esc(r.t)+"</span> "+(r.u?'<a href="'+esc(r.u)+'" target="_blank" rel="noopener noreferrer">'+esc(r.n)+"</a>":"<b>"+esc(r.n)+"</b>")+'</div><div class="ctl">'+chk("res",r.id,!!S.res[r.id],"Fait")+'</div><p class="why">'+esc(r.w)+"</p></div>").join("")+"</div></div>"}).join("");
+  const books=BOOKS.map(b=>'<div class="item"><div><span class="chip">'+esc(b.pr)+" · phase "+b.ph+"</span> <b>"+esc(b.n)+'</b> <span class="muted">'+esc(b.a)+'</span></div><div class="ctl">'+seg("book",b.id,BSTAT,S.books[b.id]||"todo")+'</div><p class="why">'+esc(b.w)+"</p></div>").join("");
+  const certs=CERTS.map(c=>'<div class="item"><div><span class="chip">'+esc(c.m)+" · "+esc(c.pr)+"</span> <b>"+esc(c.n)+'</b> <span class="muted">'+esc(c.is)+'</span></div><div class="ctl">'+seg("cert",c.id,CSTAT,S.certs[c.id]||"todo")+'</div><p class="why">'+esc(c.w)+"</p></div>").join("");
+  return '<div class="sec-head"><p class="eyebrow">Apprendre</p><h2>Ressources, lectures et certifications</h2><div class="subnav"><a href="#lc" data-act="jump" data-id="lc">Learning Center</a><a href="#rl" data-act="jump" data-id="rl">Reading List</a><a href="#ce" data-act="jump" data-id="ce">Certifications</a></div></div>'
+   +'<div id="lc"><h3 style="margin-bottom:10px">Learning Center</h3><p class="note" style="margin-bottom:16px">Les liens mènent aux sites officiels. Les catalogues de cours évoluent vite : vérifiez le contenu et la disponibilité avant de vous engager.</p>'+res+"</div>"
+   +'<div id="rl"><h3 style="margin-bottom:10px">Reading List</h3><p class="muted small" style="margin-bottom:10px">Un ouvrage lu rapporte 20 XP. Commencez par les « Essentiel » de la phase en cours.</p><div class="list">'+books+"</div></div>"
+   +'<div id="ce"><h3 style="margin-bottom:10px">Certifications</h3><p class="note" style="margin-bottom:12px">Les certifications servent de jalons, pas d\'objectif. Vérifiez prérequis, tarifs et disponibilité auprès de chaque organisme. Une certification obtenue rapporte 100 XP.</p><div class="list">'+certs+"</div></div>";
+}
+
+function renderJournal(){
+  const arr=S.journal.slice().sort((a,b)=>b.date<a.date?-1:1);
+  $("#j-count").textContent=arr.length?arr.length+" entrée"+(arr.length>1?"s":""):"Aucune entrée";
+  const fmt=d=>new Date(d).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
+  $("#jlist").innerHTML=arr.length?arr.map(j=>'<article class="entry"><div class="meta"><span>'+fmt(j.date)+'</span><span class="chip" style="margin:0">'+esc(dn(j.dom))+'</span><span>confiance '+esc(j.conf)+"/4</span></div><h3>"+esc(j.title)+"</h3><p>"+esc(j.learned)+"</p>"+(j.applied?'<p class="muted"><b>En mission :</b> '+esc(j.applied)+"</p>":"")+'<div><button class="link-btn" data-act="deljr" data-id="'+esc(j.id)+'" data-fk="del'+esc(j.id)+'">'+(confirmDel===j.id?"Confirmer la suppression":"Supprimer")+"</button></div></article>").join(""):'<p class="empty">Votre première entrée apparaîtra ici. Un bon format : un titre précis, ce qui vous a surpris, puis une situation de mission où vous l\'appliquerez cette semaine. Chaque entrée rapporte 10 XP, trois par semaine au maximum.</p>';
+}
+
+function rCareer(){
+  const g=gapAll(),r=g.cur/g.tgt;
+  const curIdx=(()=>{const i=STAGES.findIndex(s=>s.thr&&r<s.thr);return i<0?4:i})();
+  const items=STAGES.map((s,i)=>{const cls=s.thr===0?"acq":(i<curIdx?"reached":(i===curIdx?"cur":""));
+    const lab=s.thr===0?"Acquis":(i<curIdx?"Atteint":(i===curIdx?"En construction":"À venir"));
+    return '<div class="stage '+cls+'"><div class="rail"><span class="dot">'+s.n+"</span><s></s></div><div class=\"body\"><p class=\"eyebrow\">"+esc(s.hz)+" · "+lab+"</p><h3>"+esc(s.name)+'</h3><p class="sig">'+esc(s.sig)+'</p><p class="small muted">Preuve attendue : '+esc(s.proof)+(s.thr?" · atteint quand la couverture des couches IA dépasse "+Math.round(s.thr*100)+" %":"")+"</p></div></div>"}).join("");
+  return '<div class="sec-head"><p class="eyebrow">Career Evolution</p><h2 class="principle">Je ne repars pas de zéro. J\'ajoute une couche IA, data et automatisation à plus de 10 ans d\'expérience.</h2></div><div class="ladder">'+items+'</div><p class="muted small" style="max-width:66ch">Couverture actuelle des couches IA : '+g.pct+" %. Les seuils des étapes 3 à 5 sont des repères : ajustez-les si votre contexte l'exige, la Skills Matrix reste la mesure de référence.</p>";
+}
+
+let pendingImport=null,impMsg="";
+function backupBox(){
+  const last=S.backupAt?new Date(S.backupAt).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}):"jamais";
+  const stale=(doneCount()+S.journal.length>0)&&(!S.backupAt||Date.now()-S.backupAt>14*864e5);
+  const ask=pendingImport?`<div class="row-btns"><button class="btn" data-act="imp-ok" data-fk="impok">Remplacer mes données</button><button class="btn ghost" data-act="imp-no" data-fk="impno">Annuler</button></div>`:"";
+  return `<div><div class="sec-head"><p class="eyebrow">Données</p><h2>Sauvegarde</h2><p class="muted small" style="max-width:66ch">Vos données sont enregistrées sur cet appareil uniquement. Exportez un fichier de temps en temps : c'est aussi le moyen de les transférer vers un autre appareil.</p></div><div class="box"><p class="small">Dernière sauvegarde : <b>${last}</b>${stale?' <span class="chip">à refaire</span>':""}</p><div class="row-btns"><button class="btn" data-act="export" data-fk="export">Exporter (JSON)</button><label class="btn ghost" style="cursor:pointer;position:relative">Importer un fichier<input id="imp" type="file" accept="application/json,.json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></label></div><p class="small muted" role="status">${esc(impMsg)}</p>${ask}</div></div>`;
+}
+async function exportData(){
+  const data=JSON.stringify(S,null,2),name="coach-ai-native-"+new Date().toISOString().slice(0,10)+".json";
+  try{
+    const file=new File([data],name,{type:"application/json"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name})}
+    else{const u=URL.createObjectURL(new Blob([data],{type:"application/json"}));const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+    S.backupAt=Date.now();impMsg="Sauvegarde exportée.";touch();
+  }catch(e){if(!(e&&e.name==="AbortError")){impMsg="L'export a échoué. Réessayez.";render()}}
+}
+
+/* ---------- rendu ---------- */
+const TABS=[["cap","Cap"],["roadmap","Roadmap"],["skills","Compétences"],["projects","Projets"],["learn","Apprendre"],["journal","Journal"],["career","Carrière"]];
+const R={cap:rCap,roadmap:rRoadmap,skills:rSkills,projects:rProjects,learn:rLearn,career:rCareer};
+function drawTabs(){
+  $("#tabs").innerHTML=TABS.map(t=>'<button role="tab" aria-selected="'+(t[0]===tab)+'" data-act="tab" data-id="'+t[0]+'" data-fk="tab'+t[0]+'">'+t[1]+"</button>").join("");
+  TABS.forEach(t=>{$("#p-"+t[0]).hidden=t[0]!==tab});
+}
+function render(){
+  const fk=document.activeElement&&document.activeElement.dataset?document.activeElement.dataset.fk:null;
+  if(tab==="journal")renderJournal();else $("#p-"+tab).innerHTML=R[tab]();
+  if(fk){const el=document.querySelector('[data-fk="'+fk+'"]');if(el&&el!==document.activeElement)el.focus({preventScroll:true})}
+}
+function go(t){
+  if(!R[t]&&t!=="journal")t="cap";
+  tab=t;drawTabs();render();
+  try{history.replaceState(null,"","#"+t)}catch(e){}
+  window.scrollTo(0,0);
+}
+
+/* ---------- événements ---------- */
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-act]");if(!el)return;
+  const a=el.dataset.act,id=el.dataset.id,val=el.dataset.val;
+  if(a==="export"){exportData();return}
+  if(a==="imp-ok"){S=Object.assign(dflt(),pendingImport);pendingImport=null;impMsg="Données importées.";touch();return}
+  if(a==="imp-no"){pendingImport=null;impMsg="";render();return}
+  if(a==="tab"){go(id);return}
+  if(a==="jump"){e.preventDefault();const t=document.getElementById(id);if(t)t.scrollIntoView({behavior:"smooth",block:"start"});return}
+  if(a==="ph"){openPh.has(+id)?openPh.delete(+id):openPh.add(+id);render();return}
+  if(a==="goto"){const p=phaseOf(+id);openPh.add(p.id);go("roadmap");const t=document.getElementById("month-"+id);if(t)t.scrollIntoView({block:"center"});return}
+  if(a==="socle"){openSocle=!openSocle;render();return}
+  if(a==="nba-go"){const m={matrix:"skills",journal:"journal",career:"career"};go(m[id]||"cap");return}
+  if(a==="nba-task"){S.done[id]=new Date().toISOString();touch();return}
+  if(a==="lv"){S.lv[id]=+val;S.touched=true;touch();return}
+  if(a==="proj"){S.proj[id]=val;touch();return}
+  if(a==="book"){S.books[id]=val;touch();return}
+  if(a==="cert"){S.certs[id]=val;touch();return}
+  if(a==="deljr"){if(confirmDel===id){S.journal=S.journal.filter(j=>j.id!==id);confirmDel=null;touch()}else{confirmDel=id;render()}return}
+});
+document.addEventListener("change",e=>{
+  const el=e.target.closest("input[data-act]");if(!el)return;
+  const a=el.dataset.act,id=el.dataset.id;
+  if(a==="task"){if(el.checked)S.done[id]=new Date().toISOString();else delete S.done[id];touch()}
+  if(a==="res"){if(el.checked)S.res[id]=1;else delete S.res[id];touch()}
+});
+document.addEventListener("change",e=>{
+  const t=e.target;if(!t||t.id!=="imp"||!t.files||!t.files[0])return;
+  const fr=new FileReader();
+  fr.onload=()=>{try{const o=JSON.parse(fr.result);if(!o||typeof o!=="object"||o.v!==1||typeof o.done!=="object"||!Array.isArray(o.journal))throw new Error("format");pendingImport=o;impMsg="Fichier lu : "+Object.keys(o.done).length+" tâches cochées et "+o.journal.length+" entrées de journal. Ces données remplaceront celles de cet appareil."}catch(x){pendingImport=null;impMsg="Ce fichier n'est pas une sauvegarde valide."}t.value="";render()};
+  fr.readAsText(t.files[0]);
+});
+$("#jform").addEventListener("submit",e=>{
+  e.preventDefault();
+  const title=$("#j-title").value.trim(),learned=$("#j-learned").value.trim();
+  if(!title||!learned){$("#j-err").textContent="Renseignez le titre et ce que vous avez appris.";return}
+  $("#j-err").textContent="";
+  S.journal.push({id:Date.now().toString(36),date:new Date().toISOString(),title,dom:$("#j-dom").value,conf:$("#j-conf").value,learned,applied:$("#j-applied").value.trim()});
+  $("#j-title").value="";$("#j-learned").value="";$("#j-applied").value="";
+  touch();
+});
+
+/* ---------- démarrage ---------- */
+$("#j-dom").innerHTML=DOMS.filter(d=>d.id!=="socle").map(d=>'<option value="'+d.id+'">'+esc(d.n)+"</option>").join("")+'<option value="socle">Socle Agile et RTE</option>';
+adopt(lsRead());
+openPh.add(phaseOf(curMonth()).id);
+const h=(location.hash||"").replace("#","");
+tab=(R[h]||h==="journal")?h:"cap";
+drawTabs();render();setSync();
+ready=true;setSync();render();
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+})();
+</script>
+
+</body>
+</html>
